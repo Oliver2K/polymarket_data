@@ -146,28 +146,20 @@ def discover_market(interval_ts: int) -> dict | None:
 _btc_price_history = []
 
 def fetch_btc_price() -> dict:
-    """Hämtar BTC/USDT spotpris från Binance med rullande historik."""
+    """
+    Hämtar BTC/USD spotpris från Coinbase (inga rate limits, VPS-vänlig).
+    """
     global _btc_price_history
 
     price = 0.0
     try:
         r = requests.get(
-            "https://api.binance.com/api/v3/ticker/price",
-            params={"symbol": "BTCUSDT"}, timeout=2)
+            "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+            timeout=2)
         if r.status_code == 200:
-            price = float(r.json().get("price", 0))
+            price = float(r.json().get("data", {}).get("amount", 0))
     except Exception:
         pass
-
-    if price <= 0:
-        try:
-            r = requests.get(
-                "https://api.coingecko.com/api/v3/simple/price",
-                params={"ids": "bitcoin", "vs_currencies": "usd"}, timeout=3)
-            if r.status_code == 200:
-                price = float(r.json().get("bitcoin", {}).get("usd", 0))
-        except Exception:
-            pass
 
     if price <= 0:
         return {"price": 0, "change_5m_pct": 0, "change_1m_pct": 0,
